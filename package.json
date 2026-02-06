@@ -1,0 +1,22 @@
+{
+  "name": "whatsapp-notification-server",
+  "version": "1.0.0",
+  "description": "Servidor para enviar notificaciones por WhatsApp",
+  "main": "whatsapp-server.js",
+  "scripts": {
+    "start": "node whatsapp-server.js",
+    "dev": "nodemon whatsapp-server.js"
+  },
+  "keywords": ["whatsapp", "notifications", "api"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "whatsapp-web.js": "^1.23.0",
+    "qrcode-terminal": "^0.12.0",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

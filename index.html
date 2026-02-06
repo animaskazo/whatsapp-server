@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Notificaciones WhatsApp</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+
+        .status.ready {
+            background: #10b981;
+            color: white;
+        }
+
+        .status.not-ready {
+            background: #ef4444;
+            color: white;
+        }
+
+        .section {
+            background: #f9fafb;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 2px solid #e5e7eb;
+        }
+
+        .section h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #10b981;
+        }
+
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .examples {
+            background: #fffbeb;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .examples h4 {
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .examples code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #dc2626;
+        }
+
+        .loader {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            📱 Sistema de Notificaciones WhatsApp
+        </h1>
+        <div id="statusIndicator" class="status not-ready">⏳ Verificando conexión...</div>
+
+        <!-- Mensaje Simple -->
+        <div class="section">
+            <h2>📤 Enviar Mensaje Simple</h2>
+            <div class="form-group">
+                <label for="simplePhone">Número de teléfono (con código de país)</label>
+                <input type="text" id="simplePhone" placeholder="Ej: 56912345678 (Chile)">
+                <div class="examples">
+                    <h4>💡 Ejemplos de formato:</h4>
+                    <p>Chile: <code>56912345678</code></p>
+                    <p>México: <code>5215512345678</code></p>
+                    <p>España: <code>34612345678</code></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="simpleMessage">Mensaje</label>
+                <textarea id="simpleMessage" placeholder="Escribe tu mensaje aquí..."></textarea>
+            </div>
+            <button onclick="sendSimpleMessage()">Enviar Mensaje</button>
+            <div id="simpleAlert" class="alert"></div>
+        </div>
+
+        <!-- Notificación con Plantilla -->
+        <div class="section">
+            <h2>🔔 Enviar Notificación con Plantilla</h2>
+            <div class="form-group">
+                <label for="notifPhone">Número de teléfono</label>
+                <input type="text" id="notifPhone" placeholder="Ej: 56912345678">
+            </div>
+            <div class="form-group">
+                <label for="notifType">Tipo de Notificación</label>
+                <select id="notifType" onchange="updateNotificationFields()">
+                    <option value="new_order">Nueva Orden</option>
+                    <option value="payment_received">Pago Recibido</option>
+                    <option value="status_update">Actualización de Estado</option>
+                    <option value="reminder">Recordatorio</option>
+                    <option value="alert">Alerta del Sistema</option>
+                </select>
+            </div>
+            <div id="notificationFields">
+                <!-- Los campos se generan dinámicamente -->
+            </div>
+            <button onclick="sendNotification()">Enviar Notificación</button>
+            <div id="notifAlert" class="alert"></div>
+        </div>
+
+        <!-- Ejemplo de integración desde tu app -->
+        <div class="section">
+            <h2>💻 Ejemplo de Integración en tu Aplicación</h2>
+            <p style="margin-bottom: 15px; color: #6b7280;">Así puedes llamar la API desde tu aplicación web:</p>
+            <pre style="background: #1f2937; color: #10b981; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 13px;">
+// Ejemplo con Fetch API
+async function enviarNotificacionOrden(orderId, customerName, total) {
+    try {
+        const response = await fetch('http://localhost:3000/send-notification', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                phone: '56912345678',
+                type: 'new_order',
+                data: {
+                    orderId: orderId,
+                    customerName: customerName,
+                    total: total,
+                    date: new Date().toLocaleString()
+                }
+            })
+        });
+        
+        const result = await response.json();
+        console.log('Notificación enviada:', result);
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+
+// Llamar cuando se cree una orden
+enviarNotificacionOrden('ORD-12345', 'Juan Pérez', '45.990');
+            </pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Verificar estado al cargar
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_URL}/status`);
+                const data = await response.json();
+                
+                const statusEl = document.getElementById('statusIndicator');
+                if (data.status === 'ready') {
+                    statusEl.className = 'status ready';
+                    statusEl.textContent = '✅ WhatsApp Conectado';
+                } else {
+                    statusEl.className = 'status not-ready';
+                    statusEl.textContent = '❌ WhatsApp Desconectado - Escanea el QR';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('statusIndicator');
+                statusEl.className = 'status not-ready';
+                statusEl.textContent = '❌ No se puede conectar al servidor';
+            }
+        }
+
+        // Enviar mensaje simple
+        async function sendSimpleMessage() {
+            const phone = document.getElementById('simplePhone').value;
+            const message = document.getElementById('simpleMessage').value;
+            const alertEl = document.getElementById('simpleAlert');
+
+            if (!phone || !message) {
+                showAlert(alertEl, 'Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/send-message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, message })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert(alertEl, '✅ Mensaje enviado correctamente', 'success');
+                    document.getElementById('simpleMessage').value = '';
+                } else {
+                    showAlert(alertEl, `❌ Error: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert(alertEl, `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Actualizar campos según tipo de notificación
+        function updateNotificationFields() {
+            const type = document.getElementById('notifType').value;
+            const container = document.getElementById('notificationFields');
+
+            const fields = {
+                'new_order': `
+                    <div class="form-group">
+                        <label>ID de Orden</label>
+                        <input type="text" id="orderId" placeholder="ORD-12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre del Cliente</label>
+                        <input type="text" id="customerName" placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label>Total</label>
+                        <input type="text" id="total" placeholder="45.990">
+                    </div>
+                `,
+                'payment_received': `
+                    <div class="form-group">
+                        <label>Monto</label>
+                        <input type="text" id="amount" placeholder="45.990">
+                    </div>
+                    <div class="form-group">
+                        <label>Método de Pago</label>
+                        <input type="text" id="method" placeholder="Tarjeta de crédito">
+                    </div>
+                    <div class="form-group">
+                        <label>ID de Transacción</label>
+                        <input type="text" id="transactionId" placeholder="TRX-98765">
+                    </div>
+                `,
+                'status_update': `
+                    <div class="form-group">
+                        <label>ID de Orden</label>
+                        <input type="text" id="orderId" placeholder="ORD-12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Nuevo Estado</label>
+                        <input type="text" id="status" placeholder="En camino">
+                    </div>
+                    <div class="form-group">
+                        <label>Mensaje adicional (opcional)</label>
+                        <input type="text" id="message" placeholder="Llegará en 2-3 días">
+                    </div>
+                `,
+                'reminder': `
+                    <div class="form-group">
+                        <label>Título</label>
+                        <input type="text" id="title" placeholder="Reunión importante">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea id="description" placeholder="Detalles del recordatorio"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="text" id="date" placeholder="Mañana a las 10:00">
+                    </div>
+                `,
+                'alert': `
+                    <div class="form-group">
+                        <label>Mensaje de Alerta</label>
+                        <textarea id="alertMessage" placeholder="Describe la alerta"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Nivel de Severidad</label>
+                        <select id="severity">
+                            <option value="Bajo">Bajo</option>
+                            <option value="Medio">Medio</option>
+                            <option value="Alto">Alto</option>
+                            <option value="Crítico">Crítico</option>
+                        </select>
+                    </div>
+                `
+            };
+
+            container.innerHTML = fields[type];
+        }
+
+        // Enviar notificación
+        async function sendNotification() {
+            const phone = document.getElementById('notifPhone').value;
+            const type = document.getElementById('notifType').value;
+            const alertEl = document.getElementById('notifAlert');
+
+            if (!phone) {
+                showAlert(alertEl, 'Por favor ingresa un número de teléfono', 'error');
+                return;
+            }
+
+            let data = {};
+
+            // Recopilar datos según el tipo
+            switch(type) {
+                case 'new_order':
+                    data = {
+                        orderId: document.getElementById('orderId').value,
+                        customerName: document.getElementById('customerName').value,
+                        total: document.getElementById('total').value,
+                        date: new Date().toLocaleString()
+                    };
+                    break;
+                case 'payment_received':
+                    data = {
+                        amount: document.getElementById('amount').value,
+                        method: document.getElementById('method').value,
+                        transactionId: document.getElementById('transactionId').value
+                    };
+                    break;
+                case 'status_update':
+                    data = {
+                        orderId: document.getElementById('orderId').value,
+                        status: document.getElementById('status').value,
+                        message: document.getElementById('message').value
+                    };
+                    break;
+                case 'reminder':
+                    data = {
+                        title: document.getElementById('title').value,
+                        description: document.getElementById('description').value,
+                        date: document.getElementById('date').value
+                    };
+                    break;
+                case 'alert':
+                    data = {
+                        message: document.getElementById('alertMessage').value,
+                        severity: document.getElementById('severity').value
+                    };
+                    break;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/send-notification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, type, data })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(alertEl, '✅ Notificación enviada correctamente', 'success');
+                } else {
+                    showAlert(alertEl, `❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showAlert(alertEl, `❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        // Mostrar alertas
+        function showAlert(element, message, type) {
+            element.textContent = message;
+            element.className = `alert ${type} show`;
+            setTimeout(() => {
+                element.classList.remove('show');
+            }, 5000);
+        }
+
+        // Verificar estado cada 10 segundos
+        checkStatus();
+        setInterval(checkStatus, 10000);
+
+        // Inicializar campos de notificación
+        updateNotificationFields();
+    </script>
+</body>
+</html>
