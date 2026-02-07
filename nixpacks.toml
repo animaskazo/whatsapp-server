@@ -1,0 +1,12 @@
+# nixpacks.toml - Configuración para Railway
+[phases.setup]
+nixPkgs = ['nodejs_18', 'chromium']
+
+[phases.install]
+cmds = ['npm install']
+
+[phases.build]
+cmds = ['echo "Build complete"']
+
+[start]
+cmd = 'node whatsapp-server.js'

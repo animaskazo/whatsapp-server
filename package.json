@@ -5,7 +5,8 @@
   "main": "whatsapp-server.js",
   "scripts": {
     "start": "node whatsapp-server.js",
-    "dev": "nodemon whatsapp-server.js"
+    "dev": "nodemon whatsapp-server.js",
+    "postinstall": "echo 'Skipping Chromium download - using system Chromium'"
   },
   "keywords": ["whatsapp", "notifications", "api"],
   "author": "",
@@ -18,5 +19,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
