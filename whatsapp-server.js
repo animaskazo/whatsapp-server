@@ -4,9 +4,61 @@ const qrcode = require('qrcode-terminal');
 const bodyParser = require('body-parser');
 const { execSync } = require('child_process');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(bodyParser.json());
+
+// Función para limpiar archivos de bloqueo de sesión
+function cleanupSessionLocks() {
+    const sessionPath = './whatsapp-session';
+    
+    console.log('🧹 Limpiando archivos de bloqueo...');
+    
+    try {
+        const lockFiles = [
+            path.join(sessionPath, 'SingletonLock'),
+            path.join(sessionPath, 'SingletonSocket'),
+            path.join(sessionPath, 'SingletonCookie')
+        ];
+        
+        lockFiles.forEach(file => {
+            if (fs.existsSync(file)) {
+                try {
+                    fs.unlinkSync(file);
+                    console.log(`✅ Eliminado: ${file}`);
+                } catch (err) {
+                    console.log(`⚠️ No se pudo eliminar ${file}`);
+                }
+            }
+        });
+        
+        // Limpiar archivos Singleton en subdirectorios
+        if (fs.existsSync(sessionPath)) {
+            const cleanDir = (dir) => {
+                try {
+                    const files = fs.readdirSync(dir, { withFileTypes: true });
+                    files.forEach(file => {
+                        const fullPath = path.join(dir, file.name);
+                        if (file.isDirectory()) {
+                            cleanDir(fullPath);
+                        } else if (file.name.startsWith('Singleton')) {
+                            try {
+                                fs.unlinkSync(fullPath);
+                                console.log(`✅ Eliminado: ${fullPath}`);
+                            } catch (err) {}
+                        }
+                    });
+                } catch (err) {}
+            };
+            cleanDir(sessionPath);
+        }
+        
+        console.log('✅ Limpieza completada');
+    } catch (error) {
+        console.log('⚠️ Error en limpieza:', error.message);
+    }
+}
 
 // Función para encontrar Chromium en Railway
 function findChromiumExecutable() {
@@ -286,5 +338,12 @@ app.listen(PORT, () => {
     console.log(`\n🚀 Servidor iniciado en http://localhost:${PORT}`);
     console.log(`📊 Estado: http://localhost:${PORT}/status`);
     console.log(`\n⚡ Inicializando WhatsApp...\n`);
-    initWhatsApp();
+    
+    // Limpiar archivos de bloqueo antes de iniciar
+    cleanupSessionLocks();
+    
+    // Esperar un momento después de limpiar
+    setTimeout(() => {
+        initWhatsApp();
+    }, 1000);
 });
