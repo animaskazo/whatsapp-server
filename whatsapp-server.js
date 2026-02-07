@@ -2,9 +2,46 @@ const express = require('express');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const bodyParser = require('body-parser');
+const { execSync } = require('child_process');
+const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
+
+// Función para encontrar Chromium en Railway
+function findChromiumExecutable() {
+    // Opciones de rutas posibles
+    const possiblePaths = [
+        process.env.PUPPETEER_EXECUTABLE_PATH,
+        process.env.CHROME_BIN,
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome',
+        '/usr/bin/google-chrome-stable'
+    ];
+
+    // Intentar encontrar chromium en /nix/store
+    try {
+        const nixChromium = execSync('find /nix/store -name chromium -type f 2>/dev/null | head -1', { encoding: 'utf8' }).trim();
+        if (nixChromium && fs.existsSync(nixChromium)) {
+            console.log('✅ Chromium encontrado en Nix:', nixChromium);
+            return nixChromium;
+        }
+    } catch (e) {
+        // Ignorar error si no encuentra
+    }
+
+    // Probar rutas conocidas
+    for (const path of possiblePaths) {
+        if (path && fs.existsSync(path)) {
+            console.log('✅ Chromium encontrado en:', path);
+            return path;
+        }
+    }
+
+    console.log('⚠️ No se encontró Chromium, usando configuración por defecto');
+    return undefined;
+}
 
 // Cliente de WhatsApp
 let whatsappClient;
@@ -12,24 +49,34 @@ let isReady = false;
 
 // Inicializar cliente de WhatsApp
 const initWhatsApp = () => {
+    const chromiumPath = findChromiumExecutable();
+    
+    const puppeteerConfig = {
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+        ]
+    };
+
+    // Solo agregar executablePath si encontramos Chromium
+    if (chromiumPath) {
+        puppeteerConfig.executablePath = chromiumPath;
+    }
+
+    console.log('🚀 Configuración de Puppeteer:', puppeteerConfig);
+
     whatsappClient = new Client({
         authStrategy: new LocalAuth({
             dataPath: './whatsapp-session'
         }),
-        puppeteer: {
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-gpu'
-            ],
-            executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROME_BIN || '/nix/store/*-chromium-*/bin/chromium'
-        }
+        puppeteer: puppeteerConfig
     });
 
     // Generar QR para autenticación

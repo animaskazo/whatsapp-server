@@ -1,6 +1,7 @@
 # nixpacks.toml - Configuración para Railway
 [phases.setup]
-nixPkgs = ['nodejs_18', 'chromium']
+nixPkgs = ['nodejs_18', 'chromium', 'nss', 'freetype', 'harfbuzz', 'ca-certificates', 'fontconfig']
+nixLibs = ['glibc', 'libgcc', 'libstdcxx', 'nss']
 
 [phases.install]
 cmds = ['npm install']
