@@ -72,6 +72,12 @@ const initWhatsApp = () => {
 
     console.log('🚀 Configuración de Puppeteer:', puppeteerConfig);
 
+    // Agregar opciones adicionales para evitar conflictos de perfil
+    puppeteerConfig.args.push(
+        '--disable-features=ChromiumSigninProxyService',
+        '--user-data-dir=/tmp/chromium-user-data'
+    );
+
     whatsappClient = new Client({
         authStrategy: new LocalAuth({
             dataPath: './whatsapp-session'
